@@ -46,11 +46,11 @@ class MercadoPagoGateway implements PaymentGateway
                 'external_reference' => 'user_'.$user->id,
                 'payer_email' => $this->payerEmail($user),
                 'back_url' => $backUrl,
-                // Las notificaciones de suscripciones NO se pueden simular desde
-                // el panel de Mercado Pago: la URL se declara aquí, al crear el
-                // preapproval (y tiene prioridad sobre la de Tus integraciones).
-                // Así la activación no depende de que el cliente vuelva al sitio.
-                'notification_url' => route('webhooks.mercadopago'),
+                // OJO: el recurso preapproval de Mercado Pago IGNORA el campo
+                // notification_url (probado: ni al crear ni con un PUT). Para
+                // suscripciones el webhook se configura en el panel, en
+                // Tus integraciones > Webhooks, marcando el evento
+                // "Planes y suscripciones" (subscription_preapproval).
                 'status' => 'pending',
                 'auto_recurring' => [
                     'frequency' => 1,
