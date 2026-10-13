@@ -1,8 +1,11 @@
 <?php
 
+use App\Http\Controllers\PlanController;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'welcome');
+Route::view('/', 'home')->name('home');
+
+Route::get('planes', [PlanController::class, 'index'])->name('planes');
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
