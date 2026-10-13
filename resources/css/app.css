@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Los elementos con x-cloak siguen ocultos hasta que Alpine los inicializa.
+   Sin esto, el segundo ojo del botón de contraseña parpadea al cargar. */
+[x-cloak] {
+    display: none !important;
+}
+
 @layer base {
     body {
         @apply bg-ink text-slate-100 antialiased;
@@ -17,11 +23,13 @@
 
 @layer components {
     .btn-primary {
-        @apply inline-flex items-center justify-center rounded-xl bg-ember-500 px-5 py-3 font-semibold text-white shadow-ember transition hover:bg-ember-400 focus:outline-none focus:ring-2 focus:ring-ember-400 focus:ring-offset-2 focus:ring-offset-ink;
+        /* text-ink (no text-white): blanco sobre ember-500 da 3.12:1 y no llega
+           al 4.5:1 que exige WCAG AA para texto normal. Con ink da 6.73:1. */
+        @apply inline-flex items-center justify-center rounded-xl bg-ember-500 px-5 py-3 font-semibold text-ink shadow-ember transition hover:bg-ember-400 focus:outline-none focus:ring-2 focus:ring-ember-400 focus:ring-offset-2 focus:ring-offset-ink disabled:cursor-wait disabled:opacity-70;
     }
 
     .btn-ghost {
-        @apply inline-flex items-center justify-center rounded-xl border border-ink-line px-5 py-3 font-semibold text-slate-200 transition hover:border-volt hover:text-volt;
+        @apply inline-flex items-center justify-center rounded-xl border border-ink-line px-5 py-3 font-semibold text-slate-200 transition hover:border-volt hover:text-volt disabled:cursor-wait disabled:opacity-70;
     }
 
     .card {

@@ -71,7 +71,8 @@
                             @else
                                 <form method="POST" action="{{ route('subscriptions.store', $plan) }}" class="mt-8">
                                     @csrf
-                                    <button type="submit" class="{{ $isFeatured ? 'btn-primary' : 'btn-ghost' }} w-full">
+                                    <button type="submit" class="{{ $isFeatured ? 'btn-primary' : 'btn-ghost' }} w-full"
+                                            data-submitting-label="Redirigiendo a Mercado Pago…">
                                         {{ auth()->user()->hasActiveSubscription() ? 'Cambiar a este plan' : 'Suscribirme' }}
                                     </button>
                                 </form>

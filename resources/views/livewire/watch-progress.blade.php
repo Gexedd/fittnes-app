@@ -40,7 +40,8 @@ new class extends Component
             </button>
         </div>
     @else
-        <button type="button" wire:click="toggle" class="btn-primary w-full text-sm">
+        <button type="button" wire:click="toggle" wire:loading.attr="disabled" wire:target="toggle"
+                class="btn-primary w-full text-sm">
             Marcar como visto
         </button>
     @endif

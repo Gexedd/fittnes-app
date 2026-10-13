@@ -130,7 +130,9 @@ new #[Layout('layouts.public')] class extends Component
                         </span>
 
                         @unless ($unlocked)
-                            <span class="absolute right-3 top-3 rounded-md bg-ember-500 px-2 py-1 text-xs font-bold text-white">
+                            {{-- text-ink y no text-white: 6.73:1 frente a 3.12:1, que no
+                                 alcanza el 4.5:1 exigido a este tamano de texto. --}}
+                            <span class="absolute right-3 top-3 rounded-md bg-ember-500 px-2 py-1 text-xs font-bold text-ink">
                                 🔒 Bloqueado
                             </span>
                         @endunless
