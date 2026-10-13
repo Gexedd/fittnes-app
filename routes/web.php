@@ -4,6 +4,7 @@ use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\SubscriptionController;
 use Illuminate\Support\Facades\Route;
+use Livewire\Volt\Volt;
 
 Route::view('/', 'home')->name('home');
 
@@ -19,6 +20,12 @@ Route::middleware('auth')->group(function () {
 
     Route::post('suscripcion/cancelar', [SubscriptionController::class, 'cancel'])
         ->name('subscriptions.cancel');
+});
+
+// --- Panel de administración (solo el entrenador) ---
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Volt::route('videos', 'admin.videos.index')->name('videos.index');
+    Volt::route('categorias', 'admin.categories.index')->name('categories.index');
 });
 
 // --- Webhooks de la pasarela (sin CSRF; se validan por firma HMAC) ---

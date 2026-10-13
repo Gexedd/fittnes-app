@@ -16,23 +16,43 @@ new class extends Component
     }
 }; ?>
 
-<nav x-data="{ open: false }" class="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
+<nav x-data="{ open: false }" class="border-b border-ink-line/70 bg-ink/90 backdrop-blur">
     <!-- Primary Navigation Menu -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="flex h-16 justify-between">
             <div class="flex">
                 <!-- Logo -->
-                <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}" wire:navigate>
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200" />
+                <div class="flex shrink-0 items-center">
+                    <a href="{{ route('dashboard') }}" wire:navigate class="flex items-center gap-2">
+                        <span class="grid h-9 w-9 place-items-center rounded-lg bg-ember-500 font-display text-lg font-extrabold text-white">F</span>
+                        <span class="hidden font-display text-2xl font-extrabold uppercase tracking-wide text-white sm:block">
+                            Fit<span class="text-volt">nes</span>
+                        </span>
                     </a>
                 </div>
 
                 <!-- Navigation Links -->
+                @php
+                    $links = array_values(array_filter([
+                        ['route' => 'dashboard', 'label' => 'Panel'],
+                        auth()->user()->isAdmin() ? ['route' => 'admin.videos.index', 'label' => 'Videos'] : null,
+                        auth()->user()->isAdmin() ? ['route' => 'admin.categories.index', 'label' => 'Categorías'] : null,
+                        auth()->user()->isAdmin() ? null : ['route' => 'planes', 'label' => 'Planes'],
+                    ]));
+                @endphp
+
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" wire:navigate>
-                        {{ __('Dashboard') }}
-                    </x-nav-link>
+                    @foreach ($links as $link)
+                        @php($active = request()->routeIs($link['route']))
+                        <a href="{{ route($link['route']) }}" wire:navigate
+                           @class([
+                               'inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium transition',
+                               'border-ember-500 text-white' => $active,
+                               'border-transparent text-slate-400 hover:border-ink-line hover:text-volt' => ! $active,
+                           ])>
+                            {{ $link['label'] }}
+                        </a>
+                    @endforeach
                 </div>
             </div>
 
@@ -40,7 +60,7 @@ new class extends Component
             <div class="hidden sm:flex sm:items-center sm:ms-6">
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
-                        <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
+                        <button class="inline-flex items-center rounded-lg border border-ink-line bg-ink-soft px-3 py-2 text-sm font-medium leading-4 text-slate-300 transition hover:text-volt focus:outline-none">
                             <div x-data="{{ json_encode(['name' => auth()->user()->name]) }}" x-text="name" x-on:profile-updated.window="name = $event.detail.name"></div>
 
                             <div class="ms-1">
@@ -80,17 +100,25 @@ new class extends Component
 
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
-        <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" wire:navigate>
-                {{ __('Dashboard') }}
-            </x-responsive-nav-link>
+        <div class="space-y-1 pt-2 pb-3">
+            @foreach ($links as $link)
+                @php($active = request()->routeIs($link['route']))
+                <a href="{{ route($link['route']) }}" wire:navigate
+                   @class([
+                       'block border-l-4 py-2 ps-3 pe-4 text-base font-medium transition',
+                       'border-ember-500 bg-ink-soft text-white' => $active,
+                       'border-transparent text-slate-400 hover:border-ink-line hover:bg-ink-soft hover:text-volt' => ! $active,
+                   ])>
+                    {{ $link['label'] }}
+                </a>
+            @endforeach
         </div>
 
         <!-- Responsive Settings Options -->
-        <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-600">
+        <div class="border-t border-ink-line/70 pt-4 pb-1">
             <div class="px-4">
-                <div class="font-medium text-base text-gray-800 dark:text-gray-200" x-data="{{ json_encode(['name' => auth()->user()->name]) }}" x-text="name" x-on:profile-updated.window="name = $event.detail.name"></div>
-                <div class="font-medium text-sm text-gray-500">{{ auth()->user()->email }}</div>
+                <div class="font-display text-base font-bold text-white" x-data="{{ json_encode(['name' => auth()->user()->name]) }}" x-text="name" x-on:profile-updated.window="name = $event.detail.name"></div>
+                <div class="text-sm font-medium text-slate-500">{{ auth()->user()->email }}</div>
             </div>
 
             <div class="mt-3 space-y-1">

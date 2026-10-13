@@ -16,6 +16,7 @@ class Tag extends Model
 
     public function videos(): BelongsToMany
     {
-        return $this->belongsToMany(Video::class);
+        // La tabla pivote se llama "video_tag" (Eloquent adivinaría "tag_video").
+        return $this->belongsToMany(Video::class, 'video_tag');
     }
 }
