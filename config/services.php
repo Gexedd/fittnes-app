@@ -35,4 +35,22 @@ return [
         ],
     ],
 
+    /*
+    |----------------------------------------------------------------------
+    | Pasarela de pagos
+    |----------------------------------------------------------------------
+    | driver: "fake" (local/tests, sin API) o "mercadopago" (producción).
+    */
+
+    'payments' => [
+        'driver' => env('PAYMENT_DRIVER', 'fake'),
+    ],
+
+    'mercadopago' => [
+        'access_token' => env('MERCADOPAGO_ACCESS_TOKEN'),
+        'public_key' => env('MERCADOPAGO_PUBLIC_KEY'),
+        'webhook_secret' => env('MERCADOPAGO_WEBHOOK_SECRET'),
+        'base_url' => env('MERCADOPAGO_BASE_URL', 'https://api.mercadopago.com'),
+    ],
+
 ];

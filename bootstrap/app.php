@@ -16,6 +16,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => EnsureIsAdmin::class,
         ]);
+
+        // Los webhooks de la pasarela llegan desde fuera y no llevan token CSRF:
+        // se protegen con la firma HMAC (ver PaymentWebhookController).
+        $middleware->preventRequestForgery(except: [
+            'webhooks/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

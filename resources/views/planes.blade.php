@@ -64,9 +64,18 @@
                         </ul>
 
                         @auth
-                            <a href="{{ route('dashboard') }}" class="mt-8 {{ $isFeatured ? 'btn-primary' : 'btn-ghost' }} w-full">
-                                Ir a mi panel
-                            </a>
+                            @if (auth()->user()->planLevel() === $plan->level)
+                                <p class="mt-8 rounded-xl border border-volt/40 bg-volt/10 px-4 py-3 text-center text-sm font-semibold text-volt">
+                                    Tu plan actual
+                                </p>
+                            @else
+                                <form method="POST" action="{{ route('subscriptions.store', $plan) }}" class="mt-8">
+                                    @csrf
+                                    <button type="submit" class="{{ $isFeatured ? 'btn-primary' : 'btn-ghost' }} w-full">
+                                        {{ auth()->user()->hasActiveSubscription() ? 'Cambiar a este plan' : 'Suscribirme' }}
+                                    </button>
+                                </form>
+                            @endif
                         @else
                             <a href="{{ route('register', ['plan' => $plan->slug]) }}" class="mt-8 {{ $isFeatured ? 'btn-primary' : 'btn-ghost' }} w-full">
                                 Suscribirme
