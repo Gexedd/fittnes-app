@@ -7,6 +7,7 @@ use App\Models\Subscription;
 use App\Models\User;
 use App\Models\WebhookEvent;
 use App\Services\Payments\MercadoPagoGateway;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 
 it('inicia la suscripción y redirige al checkout', function () {
@@ -173,6 +174,24 @@ it('el gateway de Mercado Pago crea el preapproval y consulta su estado', functi
 
     expect($user->fresh()->hasActiveSubscription())->toBeTrue()
         ->and($user->fresh()->planLevel())->toBe(3);
+});
+
+it('no deja una suscripción pendiente si la pasarela falla', function () {
+    Http::fake([
+        'api.mercadopago.com/preapproval' => Http::response(['message' => 'Invalid value for back_url'], 400),
+    ]);
+
+    $this->app->instance(PaymentGateway::class, new MercadoPagoGateway(accessToken: 'token-de-prueba'));
+
+    $user = User::factory()->create();
+    $plan = Plan::factory()->create();
+
+    $this->withoutExceptionHandling();
+
+    expect(fn () => $this->actingAs($user)->post(route('subscriptions.store', $plan)))
+        ->toThrow(RequestException::class);
+
+    expect(Subscription::where('user_id', $user->id)->count())->toBe(0);
 });
 
 it('en sandbox usa el checkout de prueba y el pagador de prueba', function () {

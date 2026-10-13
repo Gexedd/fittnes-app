@@ -29,6 +29,14 @@
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
+        <!--
+            Los tests NO deben depender del .env del desarrollador: si alguien
+            apunta PAYMENT_DRIVER a un proveedor real, los tests harían cobros
+            (o llamadas HTTP) de verdad. Aquí se fuerzan siempre los drivers
+            falsos/simulados.
+        -->
+        <env name="PAYMENT_DRIVER" value="fake"/>
+        <env name="VIDEO_DRIVER" value="null"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>

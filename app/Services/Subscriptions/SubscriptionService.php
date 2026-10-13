@@ -32,15 +32,16 @@ class SubscriptionService
             ->where('status', SubscriptionStatus::Pending)
             ->delete();
 
-        $subscription = Subscription::create([
+        // Primero se crea la suscripción en el proveedor. Si la API falla,
+        // la excepción sube y NO dejamos una suscripción huérfana en la base.
+        $redirect = $this->gateway->startSubscription($user, $plan, $backUrl);
+
+        Subscription::create([
             'user_id' => $user->id,
             'plan_id' => $plan->id,
             'status' => SubscriptionStatus::Pending,
+            'mp_preapproval_id' => $redirect->preapprovalId,
         ]);
-
-        $redirect = $this->gateway->startSubscription($user, $plan, $backUrl);
-
-        $subscription->update(['mp_preapproval_id' => $redirect->preapprovalId]);
 
         return $redirect->url;
     }
