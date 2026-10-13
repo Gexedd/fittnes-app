@@ -7,6 +7,7 @@ use App\Models\WebhookEvent;
 use App\Services\Subscriptions\SubscriptionService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Recibe las notificaciones (webhooks) de Mercado Pago.
@@ -26,7 +27,16 @@ class PaymentWebhookController
 
     public function handle(Request $request): Response
     {
-        abort_unless($this->hasValidSignature($request), 401);
+        if (! $this->hasValidSignature($request)) {
+            // Se registra para poder distinguir "no me llegó" de "me llegó y la
+            // rechacé": sin esto, un 401 es invisible al depurar.
+            Log::warning('Webhook con firma invalida', [
+                'ip' => $request->ip(),
+                'type' => $request->input('type'),
+            ]);
+
+            abort(401);
+        }
 
         $eventId = (string) ($request->input('id') ?? $request->header('x-request-id') ?? '');
 

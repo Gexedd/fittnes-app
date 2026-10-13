@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\SubscriptionStatus;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Services\Subscriptions\SubscriptionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class SubscriptionController
 {
@@ -33,13 +35,27 @@ class SubscriptionController
      */
     public function callback(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'preapproval_id' => ['required', 'string'],
+        // Mercado Pago NO siempre añade preapproval_id a la back_url. Si se
+        // exige con validate(), Laravel redirige "de vuelta" al referer, que es
+        // el propio checkout de Mercado Pago: el usuario sale y vuelve sin que
+        // se active nada. Por eso el parámetro es opcional y, si falta, se usa
+        // la suscripción pendiente del usuario (es única: start() borra las
+        // anteriores).
+        $preapprovalId = (string) $request->query('preapproval_id', '');
+
+        Log::info('Retorno de la pasarela', [
+            'user_id' => $request->user()->id,
+            'query' => $request->query(),
+            'referer' => $request->headers->get('referer'),
         ]);
 
         $subscription = Subscription::query()
             ->where('user_id', $request->user()->id)
-            ->where('mp_preapproval_id', $validated['preapproval_id'])
+            ->when(
+                $preapprovalId !== '',
+                fn ($query) => $query->where('mp_preapproval_id', $preapprovalId),
+                fn ($query) => $query->where('status', SubscriptionStatus::Pending)->latest('id'),
+            )
             ->firstOrFail();
 
         $this->subscriptions->confirm($subscription);

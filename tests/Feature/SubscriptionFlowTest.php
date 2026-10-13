@@ -41,6 +41,23 @@ it('activa la suscripción al volver del checkout', function () {
         ->and($user->planLevel())->toBe(3);
 });
 
+it('activa la suscripción aunque la pasarela no devuelva preapproval_id', function () {
+    // Mercado Pago no siempre añade preapproval_id a la back_url. Cuando se
+    // exigía con validate(), Laravel redirigía "de vuelta" al checkout y el
+    // usuario volvía a Mercado Pago sin que se activara nada.
+    $user = User::factory()->create();
+    $plan = Plan::factory()->premium()->create();
+
+    $this->actingAs($user)->post(route('subscriptions.store', $plan));
+
+    $this->actingAs($user)
+        ->get(route('subscriptions.callback'))
+        ->assertRedirect(route('dashboard'));
+
+    expect($user->fresh()->hasActiveSubscription())->toBeTrue()
+        ->and($user->fresh()->planLevel())->toBe(3);
+});
+
 it('no activa la suscripción si el proveedor la rechaza', function () {
     $user = User::factory()->create();
     $plan = Plan::factory()->create();
