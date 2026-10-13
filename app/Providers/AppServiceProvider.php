@@ -8,6 +8,7 @@ use App\Services\Payments\FakeGateway;
 use App\Services\Payments\MercadoPagoGateway;
 use App\Services\Video\BunnyPlayback;
 use App\Services\Video\NullPlayback;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -48,6 +49,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // En producción (detrás del proxy de Forge) forzamos https para que los
+        // enlaces de correos, webhooks y redirecciones se generen correctamente.
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
+        }
     }
 }

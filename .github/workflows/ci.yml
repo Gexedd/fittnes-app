@@ -41,3 +41,20 @@ jobs:
 
       - name: Tests (Pest)
         run: php artisan test
+
+  deploy:
+    name: Deploy a producción
+    needs: tests
+    # Solo se despliega cuando hay push a main (no en pull requests).
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Disparar el deploy en Laravel Forge
+        # Secrets necesarios en el repositorio:
+        #   FORGE_SERVER_ID, FORGE_SITE_ID, FORGE_DEPLOY_TOKEN
+        run: |
+          curl --fail --silent --show-error \
+            "https://forge.laravel.com/servers/${{ secrets.FORGE_SERVER_ID }}/sites/${{ secrets.FORGE_SITE_ID }}/deploy/http?token=${{ secrets.FORGE_DEPLOY_TOKEN }}"
+        # El deploy de Forge ya ejecuta: git pull, composer install,
+        # migraciones, caches de Laravel y reinicio de Horizon.
