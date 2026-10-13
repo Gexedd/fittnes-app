@@ -10,3 +10,7 @@ Artisan::command('inspire', function () {
 
 // Recordatorio de renovación: todos los días a las 09:00.
 Schedule::command('subscriptions:renewal-reminders')->dailyAt('09:00');
+
+// Red de seguridad de pagos: los webhooks pueden perderse o no llegar, así que
+// cada 5 minutos se pregunta a la pasarela por lo que quedó pendiente.
+Schedule::command('subscriptions:reconcile')->everyFiveMinutes()->withoutOverlapping();
