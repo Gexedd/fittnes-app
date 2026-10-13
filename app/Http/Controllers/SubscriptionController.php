@@ -21,10 +21,14 @@ class SubscriptionController
      */
     public function store(Request $request, Plan $plan): RedirectResponse
     {
+        // back_url SIN query string a propósito: Mercado Pago agrega el suyo con
+        // "?" y no con "&", así que si la URL ya trae parámetros el
+        // preapproval_id queda anidado dentro del primero (back=...?preapproval_id=)
+        // y nunca llega como parámetro propio.
         $url = $this->subscriptions->start(
             user: $request->user(),
             plan: $plan,
-            backUrl: route('subscriptions.callback', ['back' => route('dashboard')]),
+            backUrl: route('subscriptions.callback'),
         );
 
         return redirect()->away($url);

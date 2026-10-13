@@ -48,8 +48,12 @@ class User extends Authenticatable
      */
     public function activeSubscription(): HasOne
     {
+        // latestOfMany: si por lo que sea hubiera más de una autorizada, manda
+        // la más reciente (la que el usuario acaba de contratar) y no la más
+        // antigua, que es lo que hacía antes sin ordenar.
         return $this->hasOne(Subscription::class)
-            ->where('status', SubscriptionStatus::Authorized->value);
+            ->where('status', SubscriptionStatus::Authorized->value)
+            ->latestOfMany();
     }
 
     public function subscriptions(): HasMany

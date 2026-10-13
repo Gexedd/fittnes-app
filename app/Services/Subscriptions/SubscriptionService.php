@@ -9,6 +9,8 @@ use App\Models\Subscription;
 use App\Models\User;
 use App\Notifications\SubscriptionActivated;
 use App\Notifications\SubscriptionCancelled;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
  * Orquesta el ciclo de vida de una suscripción. Es la única clase que
@@ -107,7 +109,42 @@ class SubscriptionService
 
         // Solo se avisa en la transición a activa (no en cada webhook repetido).
         if (! $wasActive && $isActive) {
+            $this->supersedeOtherSubscriptions($subscription);
             $subscription->user->notify(new SubscriptionActivated($subscription));
+        }
+    }
+
+    /**
+     * Al activarse una suscripción se cancelan las demás del usuario, también
+     * en el proveedor. Sin esto, un cambio de plan deja dos preapprovals vivos
+     * y Mercado Pago cobra los dos todos los meses.
+     *
+     * No se notifica al usuario: desde su punto de vista cambió de plan, no
+     * perdió nada, y un email de "suscripción cancelada" solo asustaría.
+     */
+    private function supersedeOtherSubscriptions(Subscription $subscription): void
+    {
+        $others = Subscription::query()
+            ->where('user_id', $subscription->user_id)
+            ->whereKeyNot($subscription->getKey())
+            ->where('status', SubscriptionStatus::Authorized)
+            ->get();
+
+        foreach ($others as $other) {
+            try {
+                $this->gateway->cancelSubscription($other);
+            } catch (Throwable $e) {
+                // Si el proveedor falla, la nueva suscripción igual queda activa.
+                Log::warning('No se pudo cancelar la suscripción anterior', [
+                    'subscription_id' => $other->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            $other->update([
+                'status' => SubscriptionStatus::Cancelled,
+                'cancelled_at' => now(),
+            ]);
         }
     }
 }

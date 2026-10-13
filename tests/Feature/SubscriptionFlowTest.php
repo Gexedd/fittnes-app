@@ -58,6 +58,34 @@ it('activa la suscripción aunque la pasarela no devuelva preapproval_id', funct
         ->and($user->fresh()->planLevel())->toBe(3);
 });
 
+it('al activar un plan nuevo cancela la suscripción anterior', function () {
+    // Sin esto, un cambio de plan dejaba dos preapprovals vivos en Mercado Pago
+    // y el cliente terminaba pagando los dos todos los meses.
+    $user = User::factory()->create();
+
+    $anterior = Subscription::factory()->for($user)
+        ->for(Plan::factory()->create())          // Básico (nivel 1)
+        ->create([
+            'status' => SubscriptionStatus::Authorized,
+            'mp_preapproval_id' => 'fake_basico',
+        ]);
+
+    $nueva = Subscription::factory()->for($user)
+        ->for(Plan::factory()->medium()->create()) // Medio (nivel 2)
+        ->create([
+            'status' => SubscriptionStatus::Pending,
+            'mp_preapproval_id' => 'fake_medio',
+        ]);
+
+    $this->actingAs($user)
+        ->get(route('subscriptions.callback'))
+        ->assertRedirect(route('dashboard'));
+
+    expect($nueva->refresh()->status)->toBe(SubscriptionStatus::Authorized)
+        ->and($anterior->refresh()->status)->toBe(SubscriptionStatus::Cancelled)
+        ->and($user->fresh()->planLevel())->toBe(2);
+});
+
 it('no activa la suscripción si el proveedor la rechaza', function () {
     $user = User::factory()->create();
     $plan = Plan::factory()->create();
