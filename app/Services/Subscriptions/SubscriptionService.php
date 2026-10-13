@@ -7,6 +7,8 @@ use App\Enums\SubscriptionStatus;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Notifications\SubscriptionActivated;
+use App\Notifications\SubscriptionCancelled;
 
 /**
  * Orquesta el ciclo de vida de una suscripción. Es la única clase que
@@ -68,6 +70,8 @@ class SubscriptionService
             'status' => SubscriptionStatus::Cancelled,
             'cancelled_at' => now(),
         ]);
+
+        $subscription->user->notify(new SubscriptionCancelled($subscription));
     }
 
     public function changePlan(Subscription $subscription, Plan $plan): void
@@ -89,6 +93,7 @@ class SubscriptionService
     public function applyStatus(Subscription $subscription, SubscriptionStatus $status): void
     {
         $isActive = $status->isActive();
+        $wasActive = $subscription->status === SubscriptionStatus::Authorized;
 
         $subscription->update([
             'status' => $status,
@@ -98,5 +103,10 @@ class SubscriptionService
                 ? ($subscription->cancelled_at ?? now())
                 : null,
         ]);
+
+        // Solo se avisa en la transición a activa (no en cada webhook repetido).
+        if (! $wasActive && $isActive) {
+            $subscription->user->notify(new SubscriptionActivated($subscription));
+        }
     }
 }
