@@ -51,6 +51,11 @@ return [
         'public_key' => env('MERCADOPAGO_PUBLIC_KEY'),
         'webhook_secret' => env('MERCADOPAGO_WEBHOOK_SECRET'),
         'base_url' => env('MERCADOPAGO_BASE_URL', 'https://api.mercadopago.com'),
+        // true con credenciales de prueba: usa el checkout de sandbox y exige
+        // que el pagador sea un usuario de prueba.
+        'sandbox' => env('MERCADOPAGO_SANDBOX', true),
+        // Email del "Buyer Test User" para las pruebas (vacío en producción).
+        'test_payer_email' => env('MERCADOPAGO_TEST_PAYER_EMAIL'),
     ],
 
     /*

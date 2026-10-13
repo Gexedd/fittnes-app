@@ -25,6 +25,8 @@ class AppServiceProvider extends ServiceProvider
                 'mercadopago' => new MercadoPagoGateway(
                     accessToken: (string) config('services.mercadopago.access_token'),
                     baseUrl: (string) config('services.mercadopago.base_url'),
+                    sandbox: (bool) config('services.mercadopago.sandbox'),
+                    testPayerEmail: config('services.mercadopago.test_payer_email') ?: null,
                 ),
                 default => new FakeGateway,
             };

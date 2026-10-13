@@ -25,6 +25,8 @@ class MercadoPagoGateway implements PaymentGateway
     public function __construct(
         private readonly string $accessToken,
         private readonly string $baseUrl = 'https://api.mercadopago.com',
+        private readonly bool $sandbox = false,
+        private readonly ?string $testPayerEmail = null,
     ) {
         if ($this->accessToken === '') {
             throw new RuntimeException('Falta MERCADOPAGO_ACCESS_TOKEN para usar la pasarela real.');
@@ -42,7 +44,7 @@ class MercadoPagoGateway implements PaymentGateway
             ->post("{$this->baseUrl}/preapproval", [
                 'reason' => "{$plan->name} - ".config('app.name'),
                 'external_reference' => 'user_'.$user->id,
-                'payer_email' => $user->email,
+                'payer_email' => $this->payerEmail($user),
                 'back_url' => $backUrl,
                 'status' => 'pending',
                 'auto_recurring' => [
@@ -57,8 +59,35 @@ class MercadoPagoGateway implements PaymentGateway
 
         return new CheckoutRedirect(
             preapprovalId: (string) $preapproval['id'],
-            url: (string) ($preapproval['init_point'] ?? $preapproval['sandbox_init_point'] ?? ''),
+            url: $this->checkoutUrl($preapproval),
         );
+    }
+
+    /**
+     * En sandbox el pagador tiene que ser un usuario de prueba de Mercado Pago;
+     * si configuraste uno, se usa su email en lugar del email real del usuario.
+     */
+    private function payerEmail(User $user): string
+    {
+        return $this->sandbox && $this->testPayerEmail
+            ? $this->testPayerEmail
+            : $user->email;
+    }
+
+    /**
+     * Con credenciales de prueba hay que mandar al usuario al checkout de
+     * sandbox; con credenciales de producción, al checkout real.
+     */
+    private function checkoutUrl(array $preapproval): string
+    {
+        $production = (string) ($preapproval['init_point'] ?? '');
+        $sandboxUrl = (string) ($preapproval['sandbox_init_point'] ?? '');
+
+        if ($this->sandbox && $sandboxUrl !== '') {
+            return $sandboxUrl;
+        }
+
+        return $production !== '' ? $production : $sandboxUrl;
     }
 
     public function retrieveStatus(string $providerSubscriptionId): SubscriptionStatus

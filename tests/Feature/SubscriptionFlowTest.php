@@ -174,3 +174,28 @@ it('el gateway de Mercado Pago crea el preapproval y consulta su estado', functi
     expect($user->fresh()->hasActiveSubscription())->toBeTrue()
         ->and($user->fresh()->planLevel())->toBe(3);
 });
+
+it('en sandbox usa el checkout de prueba y el pagador de prueba', function () {
+    Http::fake([
+        'api.mercadopago.com/preapproval' => Http::response([
+            'id' => 'mp_sandbox_1',
+            'init_point' => 'https://www.mercadopago.cl/subscriptions/checkout',
+            'sandbox_init_point' => 'https://sandbox.mercadopago.cl/subscriptions/checkout',
+        ], 201),
+    ]);
+
+    $this->app->instance(PaymentGateway::class, new MercadoPagoGateway(
+        accessToken: 'token-de-prueba',
+        sandbox: true,
+        testPayerEmail: 'test_user_123@testuser.com',
+    ));
+
+    $user = User::factory()->create(['email' => 'cuenta-real@fittnes.test']);
+    $plan = Plan::factory()->create();
+
+    $this->actingAs($user)
+        ->post(route('subscriptions.store', $plan))
+        ->assertRedirect('https://sandbox.mercadopago.cl/subscriptions/checkout');
+
+    Http::assertSent(fn ($request) => $request['payer_email'] === 'test_user_123@testuser.com');
+});
