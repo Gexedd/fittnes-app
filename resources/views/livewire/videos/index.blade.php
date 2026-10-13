@@ -3,6 +3,7 @@
 use App\Models\Category;
 use App\Models\Tag;
 use App\Models\Video;
+use App\Services\Video\WatchTracker;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
@@ -55,6 +56,9 @@ new #[Layout('layouts.public')] class extends Component
                 ->paginate(9),
             'categories' => Category::query()->orderBy('name')->get(),
             'tags' => Tag::query()->orderBy('name')->get(),
+            'watchedIds' => auth()->check()
+                ? app(WatchTracker::class)->watchedVideoIds(auth()->user())
+                : [],
         ];
     }
 }; ?>
@@ -134,6 +138,12 @@ new #[Layout('layouts.public')] class extends Component
                         @if ($video->duration_seconds)
                             <span class="absolute bottom-3 right-3 rounded bg-ink/85 px-2 py-1 text-xs text-slate-300">
                                 {{ $video->durationFormatted() }}
+                            </span>
+                        @endif
+
+                        @if (in_array($video->id, $watchedIds, true))
+                            <span class="absolute bottom-3 left-3 rounded bg-volt px-2 py-0.5 text-xs font-bold text-ink">
+                                ✓ Visto
                             </span>
                         @endif
                     </div>

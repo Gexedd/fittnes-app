@@ -92,6 +92,12 @@
                         </div>
                     @endif
 
+                    @if ($canWatch)
+                        <div class="mt-6">
+                            <livewire:watch-progress :video="$video" />
+                        </div>
+                    @endif
+
                     @unless ($canWatch)
                         <div class="mt-6 rounded-xl border border-ink-line bg-ink p-4 text-sm">
                             <p class="text-slate-400">Tu plan actual:</p>
