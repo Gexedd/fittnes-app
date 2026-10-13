@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\SubscriptionStatus;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\User;
@@ -44,6 +45,32 @@ it('no registra la vista si el plan no alcanza el nivel', function () {
 
     expect(VideoView::count())->toBe(0)
         ->and(VideoProgress::count())->toBe(0);
+});
+
+it('no ofrece continuar viendo un video que el plan ya no abre', function () {
+    // Caso real: el usuario tenía Premium, empezó un video de nivel 3 y bajó a
+    // Básico. El dashboard le ofrecía "continuar" y al hacer clic saltaba el
+    // paywall, porque continueWatching() no miraba el nivel del plan.
+    $user = subscribedUser(3);
+    $video = Video::factory()->create(['min_plan_level' => 3]);
+
+    VideoProgress::create([
+        'user_id' => $user->id,
+        'video_id' => $video->id,
+        'position_seconds' => 0,
+    ]);
+
+    $tracker = app(WatchTracker::class);
+
+    expect($tracker->continueWatching($user))->toHaveCount(1)
+        ->and($tracker->summary($user)['in_progress'])->toBe(1);
+
+    // El usuario baja de plan: el video deja de ser accesible.
+    $user->activeSubscription->update(['status' => SubscriptionStatus::Cancelled]);
+    $user = $user->fresh();
+
+    expect($tracker->continueWatching($user))->toBeEmpty()
+        ->and($tracker->summary($user)['in_progress'])->toBe(0);
 });
 
 it('no duplica la vista al recargar dentro de la misma hora', function () {

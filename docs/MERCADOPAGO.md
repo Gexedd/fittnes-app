@@ -260,6 +260,27 @@ Sin `trustProxies`, las URLs generadas salen en `http://` aunque el usuario nave
 por HTTPS (y la `back_url` que recibe MP queda con el esquema equivocado). Está
 resuelto en `bootstrap/app.php`, configurable con `TRUSTED_PROXIES`.
 
+### 8.7 En suscripciones conviene entrar con la cuenta de comprador
+
+Una suscripción es una **autorización de cobro recurrente**, no un cargo suelto. Si
+en el checkout se introduce la tarjeta a mano (sin sesión iniciada), Mercado Pago
+puede responder *"Algo salió mal. No pudimos procesar tu pago"*. El camino fiable
+es **iniciar sesión con el Buyer Test User** y pagar con la tarjeta que tenga
+guardada esa cuenta.
+
+### 8.8 Las credenciales y los webhooks son POR APLICACIÓN
+
+Cada aplicación de *Tus integraciones* tiene **sus propias** credenciales y su
+**propia** configuración de Webhooks (con su propia clave secreta). Al crear una
+app nueva hay que actualizar las tres variables del `.env` y volver a configurar la
+URL y el evento.
+
+Además, la app debe crearse bajo el producto **Suscripciones** (no Checkout Pro).
+Las credenciales funcionan igual —por eso cobrar funciona con cualquiera—, pero el
+medidor de *Calidad de integración* y las etapas solo tienen sentido con el
+producto correcto: si tu app es de Checkout Pro, te pedirá un "Payment ID
+productivo" que no aplica a suscripciones.
+
 ---
 
 ## 9. Reconciliación: la red de seguridad

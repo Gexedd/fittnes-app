@@ -41,7 +41,7 @@ class PaymentWebhookController
         $eventId = (string) ($request->input('id') ?? $request->header('x-request-id') ?? '');
 
         if ($eventId === '') {
-            return response()->noContent();
+            return $this->acknowledge();
         }
 
         $event = WebhookEvent::firstOrCreate(
@@ -51,7 +51,7 @@ class PaymentWebhookController
 
         // Ya procesado antes: no se vuelve a aplicar.
         if ($event->isProcessed()) {
-            return response()->noContent();
+            return $this->acknowledge();
         }
 
         $type = (string) $request->input('type', '');
@@ -63,7 +63,19 @@ class PaymentWebhookController
 
         $event->update(['processed_at' => now()]);
 
-        return response()->noContent();
+        return $this->acknowledge();
+    }
+
+    /**
+     * Respuesta al webhook. Mercado Pago documenta como válidos 200 o 201, y
+     * reintenta cada 15 minutos si no la recibe en 22 segundos.
+     *
+     * Se devuelve 200 sin cuerpo en lugar de 204 para ajustarse a lo
+     * documentado, aunque el simulador acepte las dos cosas.
+     */
+    private function acknowledge(): Response
+    {
+        return response()->noContent(200);
     }
 
     /**

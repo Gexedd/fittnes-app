@@ -151,7 +151,7 @@ it('procesa un webhook firmado y sincroniza la suscripción', function () {
     ], [
         'x-signature' => 'ts='.$timestamp.',v1='.hash_hmac('sha256', $manifest, 'secreto-de-prueba'),
         'x-request-id' => $requestId,
-    ])->assertNoContent();
+    ])->assertOk();
 
     expect($subscription->refresh()->status)->toBe(SubscriptionStatus::Authorized)
         ->and(WebhookEvent::where('event_id', 'evt_1')->whereNotNull('processed_at')->exists())->toBeTrue();
@@ -178,7 +178,7 @@ it('ignora un webhook duplicado', function () {
     ], [
         'x-signature' => 'ts='.$timestamp.',v1='.hash_hmac('sha256', $manifest, 'secreto-de-prueba'),
         'x-request-id' => $requestId,
-    ])->assertNoContent();
+    ])->assertOk();
 
     expect(Subscription::where('mp_preapproval_id', 'mp_999')->exists())->toBeFalse();
 });

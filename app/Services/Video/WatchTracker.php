@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Video;
 use App\Models\VideoProgress;
 use App\Models\VideoView;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 /**
@@ -84,6 +85,9 @@ class WatchTracker
             ->with('video.category')
             ->where('user_id', $user->id)
             ->whereNull('completed_at')
+            // Sin esto el dashboard ofrecía "continuar" un video que el plan
+            // actual ya no abre: al hacer clic saltaba el paywall.
+            ->whereHas('video', fn (Builder $query) => $this->restrictToPlan($query, $user))
             ->latest('updated_at')
             ->limit($limit)
             ->get()
@@ -142,6 +146,7 @@ class WatchTracker
         $inProgress = VideoProgress::query()
             ->where('user_id', $user->id)
             ->whereNull('completed_at')
+            ->whereHas('video', fn (Builder $query) => $this->restrictToPlan($query, $user))
             ->count();
 
         return [
@@ -150,5 +155,20 @@ class WatchTracker
             'available' => max($available, $completed),
             'percent' => $available > 0 ? (int) round($completed / $available * 100) : 0,
         ];
+    }
+
+    /**
+     * Limita una consulta de videos al contenido que el plan del usuario abre.
+     *
+     * Los admins ven todo lo publicado (no dependen del nivel, igual que en
+     * User::canAccessLevel), así su panel no se queda vacío.
+     */
+    private function restrictToPlan(Builder $query, User $user): void
+    {
+        $query->published();
+
+        if (! $user->isAdmin()) {
+            $query->visibleForLevel($user->planLevel());
+        }
     }
 }
