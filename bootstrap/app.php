@@ -13,6 +13,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Detrás de un túnel o proxy (cloudflared, sail share, un balanceador…)
+        // la petición entra por HTTP aunque el usuario navegue por HTTPS. Al
+        // confiar en las cabeceras X-Forwarded-* Laravel deduce el esquema real
+        // y genera URLs https:// (si no, la back_url que enviamos a Mercado
+        // Pago saldría en http:// y el navegador podría bloquear contenido
+        // mixto). Para restringirlo en producción, define TRUSTED_PROXIES.
+        $middleware->trustProxies(at: env('TRUSTED_PROXIES', '*'));
+
         $middleware->alias([
             'admin' => EnsureIsAdmin::class,
         ]);
