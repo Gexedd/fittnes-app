@@ -43,4 +43,10 @@ interface PaymentGateway
      * Cambia de plan (upgrade/downgrade) una suscripción existente.
      */
     public function swapPlan(Subscription $subscription, Plan $plan): void;
+
+    /**
+     * Consulta un cobro concreto de una suscripción: la factura del período.
+     * Se usa al recibir el webhook subscription_authorized_payment.
+     */
+    public function retrieveAuthorizedPayment(string $providerPaymentId): AuthorizedPayment;
 }

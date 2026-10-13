@@ -2,12 +2,14 @@
 
 namespace App\Services\Payments;
 
+use App\Contracts\Payments\AuthorizedPayment;
 use App\Contracts\Payments\CheckoutRedirect;
 use App\Contracts\Payments\PaymentGateway;
 use App\Enums\SubscriptionStatus;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
@@ -104,6 +106,28 @@ class MercadoPagoGateway implements PaymentGateway
 
         // Los estados de Mercado Pago coinciden con nuestro enum.
         return SubscriptionStatus::tryFrom((string) $status) ?? SubscriptionStatus::Pending;
+    }
+
+    public function retrieveAuthorizedPayment(string $providerPaymentId): AuthorizedPayment
+    {
+        $invoice = $this->client()
+            ->get("{$this->baseUrl}/authorized_payments/{$providerPaymentId}")
+            ->throw()
+            ->json();
+
+        // El resultado real del cobro está en payment.status (approved/rejected).
+        // El status de la factura (processed, recycling, rejected...) describe el
+        // ciclo del período, no si el dinero entró.
+        $status = (string) ($invoice['payment']['status'] ?? $invoice['status'] ?? '');
+        $fechaPago = $invoice['payment']['date_approved'] ?? $invoice['debit_date'] ?? null;
+
+        return new AuthorizedPayment(
+            id: (string) ($invoice['id'] ?? $providerPaymentId),
+            preapprovalId: (string) ($invoice['preapproval_id'] ?? ''),
+            amountClp: (int) ($invoice['transaction_amount'] ?? 0),
+            approved: in_array($status, ['approved', 'processed'], true),
+            paidAt: $fechaPago !== null ? Carbon::parse($fechaPago) : null,
+        );
     }
 
     public function cancelSubscription(Subscription $subscription): void

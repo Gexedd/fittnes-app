@@ -55,10 +55,16 @@ class PaymentWebhookController
         }
 
         $type = (string) $request->input('type', '');
-        $preapprovalId = (string) $request->input('data.id', '');
+        $dataId = (string) $request->input('data.id', '');
 
-        if ($preapprovalId !== '' && in_array($type, ['subscription_preapproval', 'preapproval'], true)) {
-            $this->syncPreapproval($preapprovalId);
+        if ($dataId !== '' && in_array($type, ['subscription_preapproval', 'preapproval'], true)) {
+            // Alta o cambio de estado de la suscripción.
+            $this->syncPreapproval($dataId);
+        }
+
+        if ($dataId !== '' && $type === 'subscription_authorized_payment') {
+            // Cobro del período: se registra y, si falló, se pausa el acceso.
+            $this->subscriptions->recordAuthorizedPayment($dataId);
         }
 
         $event->update(['processed_at' => now()]);

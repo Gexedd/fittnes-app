@@ -4,9 +4,11 @@ namespace App\Services\Subscriptions;
 
 use App\Contracts\Payments\PaymentGateway;
 use App\Enums\SubscriptionStatus;
+use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\User;
+use App\Notifications\PaymentFailed;
 use App\Notifications\SubscriptionActivated;
 use App\Notifications\SubscriptionCancelled;
 use Illuminate\Support\Facades\Log;
@@ -82,6 +84,47 @@ class SubscriptionService
         $this->gateway->swapPlan($subscription, $plan);
 
         $subscription->update(['plan_id' => $plan->id]);
+    }
+
+    /**
+     * Registra el cobro de un período y pausa la suscripción si se rechazó.
+     *
+     * Mercado Pago avisa con el webhook subscription_authorized_payment. Sin
+     * esto, un cobro fallido del mes 2 pasaba desapercibido: el cliente seguía
+     * con acceso sin pagar y la tabla payments quedaba vacía (por eso "ingresos
+     * del mes" marcaba siempre 0).
+     */
+    public function recordAuthorizedPayment(string $providerPaymentId): void
+    {
+        $cobro = $this->gateway->retrieveAuthorizedPayment($providerPaymentId);
+
+        $subscription = Subscription::query()
+            ->where('mp_preapproval_id', $cobro->preapprovalId)
+            ->first();
+
+        // Un cobro de una suscripción que no es nuestra: no hacemos nada.
+        if (! $subscription) {
+            return;
+        }
+
+        Payment::updateOrCreate(
+            ['mp_payment_id' => $cobro->id],
+            [
+                'user_id' => $subscription->user_id,
+                'subscription_id' => $subscription->id,
+                'amount_clp' => $cobro->amountClp,
+                'status' => $cobro->approved ? 'approved' : 'rejected',
+                'paid_at' => $cobro->approved ? ($cobro->paidAt ?? now()) : null,
+            ],
+        );
+
+        if ($cobro->approved) {
+            return;
+        }
+
+        // Cobro rechazado: se corta el acceso y se avisa al cliente (dunning).
+        $this->applyStatus($subscription, SubscriptionStatus::Paused);
+        $subscription->user->notify(new PaymentFailed($subscription));
     }
 
     public function statusFromProvider(string $providerSubscriptionId): SubscriptionStatus

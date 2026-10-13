@@ -170,6 +170,21 @@ comando de reconciliación de la sección 9).
 No es grave: al volver del checkout la app reconsulta el estado a Mercado Pago
 (`retrieveStatus`) y, además, está la reconciliación periódica (sección 9).
 
+### 5.6 Qué eventos maneja la aplicación
+
+La casilla **"Planes y suscripciones"** del panel cubre tres eventos. La app usa
+dos:
+
+| Evento de Mercado Pago | Qué es | Qué hace la app |
+|---|---|---|
+| `subscription_preapproval` | Alta o cambio de estado de la suscripción | Sincroniza el estado (`authorized`, `paused`, `cancelled`) |
+| `subscription_authorized_payment` | **Cobro del período** (el mensual) | Registra el `Payment` y, si el cobro se rechaza, **pausa** la suscripción y avisa al cliente (dunning) |
+| `subscription_preapproval_plan` | Plantilla de plan | No se usa: los planes se crean al vuelo, sin plantilla |
+
+> 💡 Sin el evento de cobro, un pago rechazado del segundo mes pasaba
+desapercibido: el cliente seguía con acceso sin pagar y la tabla `payments`
+quedaba vacía (por eso "ingresos del mes" marcaba siempre $0).
+
 ---
 
 ## 6. Errores comunes
@@ -305,6 +320,12 @@ scheduler no corre solo:
 ```
 
 > 💡 **Regla general:** los webhooks aceleran, la reconciliación garantiza.
+
+> ⚠️ **Limitación conocida:** `subscriptions:reconcile` revisa las suscripciones
+> **pendientes**. Si se pierde un `subscription_authorized_payment` de un cobro
+> rechazado, esa suscripción se quedaría en `authorized` (con acceso) porque nadie
+> la vuelve a mirar. Para cerrarlo del todo convendría revisar también las
+> autorizadas de forma periódica.
 
 ---
 
