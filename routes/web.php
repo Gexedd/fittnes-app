@@ -3,6 +3,7 @@
 use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\VideoController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
@@ -10,8 +11,13 @@ Route::view('/', 'home')->name('home');
 
 Route::get('planes', [PlanController::class, 'index'])->name('planes');
 
+// Catálogo público (visible sin sesión; el contenido bloqueado invita a suscribirse).
+Volt::route('catalogo', 'videos.index')->name('videos.index');
+
 // --- Suscripciones (requieren sesión) ---
 Route::middleware('auth')->group(function () {
+    Route::get('videos/{video:slug}', [VideoController::class, 'show'])->name('videos.show');
+
     Route::post('suscribirse/{plan:slug}', [SubscriptionController::class, 'store'])
         ->name('subscriptions.store');
 

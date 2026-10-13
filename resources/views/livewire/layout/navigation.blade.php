@@ -35,6 +35,7 @@ new class extends Component
                 @php
                     $links = array_values(array_filter([
                         ['route' => 'dashboard', 'label' => 'Panel'],
+                        ['route' => 'videos.index', 'label' => 'Catálogo'],
                         auth()->user()->isAdmin() ? ['route' => 'admin.videos.index', 'label' => 'Videos'] : null,
                         auth()->user()->isAdmin() ? ['route' => 'admin.categories.index', 'label' => 'Categorías'] : null,
                         auth()->user()->isAdmin() ? null : ['route' => 'planes', 'label' => 'Planes'],

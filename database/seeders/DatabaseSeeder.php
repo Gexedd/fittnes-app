@@ -18,6 +18,11 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(PlanSeeder::class);
 
+        // Contenido de ejemplo solo en local: en producción no queremos datos falsos.
+        if (app()->environment('local')) {
+            $this->call(DemoContentSeeder::class);
+        }
+
         // El entrenador (administrador).
         User::factory()->create([
             'name' => 'Entrenador',

@@ -53,4 +53,21 @@ return [
         'base_url' => env('MERCADOPAGO_BASE_URL', 'https://api.mercadopago.com'),
     ],
 
+    /*
+    |----------------------------------------------------------------------
+    | Video (Bunny Stream)
+    |----------------------------------------------------------------------
+    | driver: "null" (sin credenciales) o "bunny" (URLs firmadas).
+    */
+
+    'video' => [
+        'driver' => env('VIDEO_DRIVER', 'null'),
+    ],
+
+    'bunny' => [
+        'library_id' => env('BUNNY_STREAM_LIBRARY_ID'),
+        'token_key' => env('BUNNY_STREAM_TOKEN_KEY'),
+        'cdn_hostname' => env('BUNNY_STREAM_CDN_HOSTNAME'),
+    ],
+
 ];

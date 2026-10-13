@@ -26,6 +26,7 @@
 
                 <nav class="hidden items-center gap-8 sm:flex">
                     <a href="{{ route('home') }}" class="text-sm font-medium text-slate-300 transition hover:text-volt">Inicio</a>
+                    <a href="{{ route('videos.index') }}" class="text-sm font-medium text-slate-300 transition hover:text-volt">Catálogo</a>
                     <a href="{{ route('planes') }}" class="text-sm font-medium text-slate-300 transition hover:text-volt">Planes</a>
                 </nav>
 

@@ -3,8 +3,11 @@
 namespace App\Providers;
 
 use App\Contracts\Payments\PaymentGateway;
+use App\Contracts\Video\VideoPlayback;
 use App\Services\Payments\FakeGateway;
 use App\Services\Payments\MercadoPagoGateway;
+use App\Services\Video\BunnyPlayback;
+use App\Services\Video\NullPlayback;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -23,6 +26,19 @@ class AppServiceProvider extends ServiceProvider
                     baseUrl: (string) config('services.mercadopago.base_url'),
                 ),
                 default => new FakeGateway,
+            };
+        });
+
+        // Reproducción: "bunny" genera URLs firmadas; sin credenciales se usa
+        // el driver nulo y la vista muestra un marcador.
+        $this->app->singleton(VideoPlayback::class, function (): VideoPlayback {
+            return match (config('services.video.driver')) {
+                'bunny' => new BunnyPlayback(
+                    libraryId: (string) config('services.bunny.library_id'),
+                    tokenKey: (string) config('services.bunny.token_key'),
+                    cdnHostname: (string) config('services.bunny.cdn_hostname'),
+                ),
+                default => new NullPlayback,
             };
         });
     }
