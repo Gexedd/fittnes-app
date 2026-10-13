@@ -30,6 +30,7 @@ Route::middleware('auth')->group(function () {
 
 // --- Panel de administración (solo el entrenador) ---
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Volt::route('metricas', 'admin.metrics.index')->name('metrics.index');
     Volt::route('videos', 'admin.videos.index')->name('videos.index');
     Volt::route('categorias', 'admin.categories.index')->name('categories.index');
 });
